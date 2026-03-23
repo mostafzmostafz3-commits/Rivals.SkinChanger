@@ -1,0 +1,279 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local viewModels = player:WaitForChild("PlayerScripts"):WaitForChild("Assets"):WaitForChild("ViewModels")
+local CoreGui = game:GetService("CoreGui")
+
+-- Remove old GUI
+if CoreGui:FindFirstChild("UltimateWeaponGUI") then
+    CoreGui.UltimateWeaponGUI:Destroy()
+end
+
+local ScreenGui = Instance.new("ScreenGui", CoreGui)
+ScreenGui.Name = "UltimateWeaponGUI"
+ScreenGui.ResetOnSpawn = false
+
+-- Main Frame
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Size = UDim2.new(0, 480, 0, 620)
+MainFrame.Position = UDim2.new(0, 100, 0, 70)
+MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 28)
+MainFrame.ClipsDescendants = true
+MainFrame.Active = true
+MainFrame.Draggable = true
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
+
+-- Title Bar
+local TitleBar = Instance.new("Frame", MainFrame)
+TitleBar.Size = UDim2.new(1, 0, 0, 40)
+TitleBar.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+Instance.new("UICorner", TitleBar).CornerRadius = UDim.new(0, 12)
+
+local Title = Instance.new("TextLabel", TitleBar)
+Title.Size = UDim2.new(1, -40, 1, 0)
+Title.Position = UDim2.new(0, 10, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "🎨 Ultimate Weapon Skins System"
+Title.TextColor3 = Color3.fromRGB(0, 200, 255)
+Title.TextScaled = true
+Title.Font = Enum.Font.GothamBold
+Title.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Close Button
+local closeBtn = Instance.new("TextButton", TitleBar)
+closeBtn.Size = UDim2.new(0, 30, 0, 30)
+closeBtn.Position = UDim2.new(1, -35, 0, 5)
+closeBtn.BackgroundColor3 = Color3.fromRGB(220, 60, 60)
+closeBtn.Text = "✕"
+closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeBtn.TextScaled = true
+closeBtn.Font = Enum.Font.GothamBold
+Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 8)
+closeBtn.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+end)
+
+-- Top Section: Weapons Selection
+local WeaponsSection = Instance.new("Frame", MainFrame)
+WeaponsSection.Size = UDim2.new(1, -20, 0, 130)
+WeaponsSection.Position = UDim2.new(0, 10, 0, 50)
+WeaponsSection.BackgroundColor3 = Color3.fromRGB(25, 25, 38)
+Instance.new("UICorner", WeaponsSection).CornerRadius = UDim.new(0, 10)
+
+local WeaponsHeader = Instance.new("TextLabel", WeaponsSection)
+WeaponsHeader.Size = UDim2.new(1, -20, 0, 25)
+WeaponsHeader.Position = UDim2.new(0, 10, 0, 5)
+WeaponsHeader.BackgroundTransparency = 1
+WeaponsHeader.Text = "🔫 1. Select Your Weapon"
+WeaponsHeader.TextColor3 = Color3.fromRGB(255, 200, 100)
+WeaponsHeader.TextScaled = true
+WeaponsHeader.Font = Enum.Font.GothamBold
+WeaponsHeader.TextXAlignment = Enum.TextXAlignment.Left
+
+local selectedWeaponLabel = Instance.new("TextLabel", WeaponsSection)
+selectedWeaponLabel.Size = UDim2.new(1, -20, 0, 24)
+selectedWeaponLabel.Position = UDim2.new(0, 10, 0, 35)
+selectedWeaponLabel.BackgroundColor3 = Color3.fromRGB(35, 35, 52)
+selectedWeaponLabel.TextColor3 = Color3.fromRGB(255, 180, 80)
+selectedWeaponLabel.Text = "⚡ No weapon selected"
+selectedWeaponLabel.TextScaled = true
+selectedWeaponLabel.Font = Enum.Font.GothamBold
+Instance.new("UICorner", selectedWeaponLabel).CornerRadius = UDim.new(0, 8)
+
+local WeaponsContainer = Instance.new("ScrollingFrame", WeaponsSection)
+WeaponsContainer.Size = UDim2.new(1, -20, 0, 50)
+WeaponsContainer.Position = UDim2.new(0, 10, 0, 65)
+WeaponsContainer.BackgroundTransparency = 1
+WeaponsContainer.ScrollBarThickness = 4
+WeaponsContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+
+local WeaponsGrid = Instance.new("UIGridLayout", WeaponsContainer)
+WeaponsGrid.CellSize = UDim2.new(0, 100, 0, 30)
+WeaponsGrid.FillDirection = Enum.FillDirection.Horizontal
+WeaponsGrid.HorizontalAlignment = Enum.HorizontalAlignment.Left
+WeaponsGrid.VerticalAlignment = Enum.VerticalAlignment.Top
+WeaponsGrid.CellPadding = UDim2.new(0, 8, 0, 5)
+
+local selectedWeapon = nil
+local weaponButtons = {}
+
+local weaponsFolder = viewModels:FindFirstChild("Weapons")
+if weaponsFolder then
+    for _, weapon in pairs(weaponsFolder:GetChildren()) do
+        if weapon:IsA("Model") or weapon:IsA("Folder") then
+            local btn = Instance.new("TextButton", WeaponsContainer)
+            btn.Text = weapon.Name
+            btn.TextScaled = true
+            btn.Font = Enum.Font.GothamBold
+            btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            btn.BackgroundColor3 = Color3.fromRGB(55, 55, 80)
+            btn.AutoButtonColor = true
+            Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+            
+            btn.MouseButton1Click:Connect(function()
+                selectedWeapon = weapon
+                selectedWeaponLabel.Text = "✅ Selected: " .. weapon.Name
+                selectedWeaponLabel.TextColor3 = Color3.fromRGB(100, 255, 150)
+                
+                for _, b in pairs(weaponButtons) do
+                    b.BackgroundColor3 = Color3.fromRGB(55, 55, 80)
+                end
+                btn.BackgroundColor3 = Color3.fromRGB(100, 100, 160)
+            end)
+            
+            table.insert(weaponButtons, btn)
+        end
+    end
+    WeaponsContainer.CanvasSize = UDim2.new(0, 0, 0, WeaponsGrid.AbsoluteContentSize.Y + 5)
+end
+
+-- Bottom Section: Skins
+local SkinsMainFrame = Instance.new("Frame", MainFrame)
+SkinsMainFrame.Size = UDim2.new(1, -20, 0, 430)
+SkinsMainFrame.Position = UDim2.new(0, 10, 0, 190)
+SkinsMainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 38)
+Instance.new("UICorner", SkinsMainFrame).CornerRadius = UDim.new(0, 12)
+
+local SkinsHeader = Instance.new("TextLabel", SkinsMainFrame)
+SkinsHeader.Size = UDim2.new(1, -20, 0, 25)
+SkinsHeader.Position = UDim2.new(0, 10, 0, 5)
+SkinsHeader.BackgroundTransparency = 1
+SkinsHeader.Text = "🎨 2. Choose a Skin"
+SkinsHeader.TextColor3 = Color3.fromRGB(100, 200, 255)
+SkinsHeader.TextScaled = true
+SkinsHeader.Font = Enum.Font.GothamBold
+SkinsHeader.TextXAlignment = Enum.TextXAlignment.Left
+
+local SearchBox = Instance.new("TextBox", SkinsMainFrame)
+SearchBox.Size = UDim2.new(1, -20, 0, 32)
+SearchBox.Position = UDim2.new(0, 10, 0, 35)
+SearchBox.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+SearchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+SearchBox.PlaceholderText = "🔍 Search for skin..."
+SearchBox.TextScaled = true
+SearchBox.Font = Enum.Font.GothamBold
+Instance.new("UICorner", SearchBox).CornerRadius = UDim.new(0, 8)
+
+local SkinsScroll = Instance.new("ScrollingFrame", SkinsMainFrame)
+SkinsScroll.Size = UDim2.new(1, -20, 0, 350)
+SkinsScroll.Position = UDim2.new(0, 10, 0, 72)
+SkinsScroll.BackgroundTransparency = 1
+SkinsScroll.ScrollBarThickness = 6
+SkinsScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+
+local SkinsGrid = Instance.new("UIGridLayout", SkinsScroll)
+SkinsGrid.CellSize = UDim2.new(0, 140, 0, 42)
+SkinsGrid.FillDirection = Enum.FillDirection.Horizontal
+SkinsGrid.HorizontalAlignment = Enum.HorizontalAlignment.Left
+SkinsGrid.VerticalAlignment = Enum.VerticalAlignment.Top
+SkinsGrid.CellPadding = UDim2.new(0, 10, 0, 8)
+
+local allSkinCards = {}
+
+local function addSkinCard(skinName, sourceFolder)
+    local card = Instance.new("Frame", SkinsScroll)
+    card.Size = UDim2.new(0, 140, 0, 42)
+    card.BackgroundColor3 = Color3.fromRGB(48, 48, 68)
+    Instance.new("UICorner", card).CornerRadius = UDim.new(0, 8)
+    
+    local nameLabel = Instance.new("TextLabel", card)
+    nameLabel.Size = UDim2.new(0.6, -5, 1, -4)
+    nameLabel.Position = UDim2.new(0, 5, 0, 2)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.Text = skinName
+    nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    nameLabel.TextScaled = true
+    nameLabel.Font = Enum.Font.GothamBold
+    nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+    
+    local applyBtn = Instance.new("TextButton", card)
+    applyBtn.Size = UDim2.new(0.35, -5, 0.7, -4)
+    applyBtn.Position = UDim2.new(0.65, 0, 0.15, 0)
+    applyBtn.BackgroundColor3 = Color3.fromRGB(70, 140, 110)
+    applyBtn.Text = "Apply"
+    applyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    applyBtn.TextScaled = true
+    applyBtn.Font = Enum.Font.GothamBold
+    Instance.new("UICorner", applyBtn).CornerRadius = UDim.new(0, 6)
+    
+    applyBtn.MouseButton1Click:Connect(function()
+        if not selectedWeapon then
+            selectedWeaponLabel.Text = "⚠️ Please select a weapon first!"
+            selectedWeaponLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+            task.wait(1.5)
+            selectedWeaponLabel.Text = "⚡ No weapon selected"
+            selectedWeaponLabel.TextColor3 = Color3.fromRGB(255, 180, 80)
+            return
+        end
+        
+        local source = sourceFolder:FindFirstChild(skinName)
+        if not source then return end
+        
+        for _, child in pairs(selectedWeapon:GetChildren()) do
+            child:Destroy()
+        end
+        
+        for _, child in pairs(source:GetChildren()) do
+            child:Clone().Parent = selectedWeapon
+        end
+        
+        local originalColor = applyBtn.BackgroundColor3
+        applyBtn.BackgroundColor3 = Color3.fromRGB(100, 200, 100)
+        selectedWeaponLabel.Text = "✓ Applied '" .. skinName .. "' to " .. selectedWeapon.Name
+        selectedWeaponLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
+        task.wait(0.6)
+        applyBtn.BackgroundColor3 = originalColor
+        task.wait(1)
+        selectedWeaponLabel.Text = "✅ Selected: " .. selectedWeapon.Name
+        selectedWeaponLabel.TextColor3 = Color3.fromRGB(100, 255, 150)
+    end)
+    
+    return card, nameLabel
+end
+
+local skinFolders = {"Bundles","Skin Case","Skin Case 2","Unobtainable","Other","Glorious","Season","Fastive SkinCase"}
+for _, folderName in ipairs(skinFolders) do
+    local folder = viewModels:FindFirstChild(folderName)
+    if folder then
+        for _, skin in pairs(folder:GetChildren()) do
+            if skin:IsA("Model") or skin:IsA("Folder") then
+                local card, nameLabel = addSkinCard(skin.Name, folder)
+                table.insert(allSkinCards, {card = card, name = skin.Name:lower(), nameLabel = nameLabel})
+            end
+        end
+    end
+end
+
+local function updateCanvasSize()
+    task.wait(0.1)
+    SkinsScroll.CanvasSize = UDim2.new(0, 0, 0, SkinsGrid.AbsoluteContentSize.Y + 10)
+end
+updateCanvasSize()
+
+SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
+    local searchTerm = SearchBox.Text:lower()
+    for _, item in ipairs(allSkinCards) do
+        item.card.Visible = (searchTerm == "" or item.name:find(searchTerm))
+    end
+    updateCanvasSize()
+end)
+
+-- Footer: Created by Wagep1234
+local footer = Instance.new("TextLabel", MainFrame)
+footer.Size = UDim2.new(1, -20, 0, 18)
+footer.Position = UDim2.new(0, 10, 1, -20)
+footer.BackgroundTransparency = 1
+footer.Text = "Created by Wagep1234 | Weapon Skin System"
+footer.TextColor3 = Color3.fromRGB(150, 150, 150)
+footer.TextScaled = true
+footer.Font = Enum.Font.Gotham
+
+player.CharacterAdded:Connect(function(character)
+    selectedWeapon = nil
+    selectedWeaponLabel.Text = "⚡ No weapon selected"
+    selectedWeaponLabel.TextColor3 = Color3.fromRGB(255, 180, 80)
+    for _, btn in ipairs(weaponButtons) do
+        btn.BackgroundColor3 = Color3.fromRGB(55, 55, 80)
+    end
+end)
+
+print("✓ Ultimate Weapon Skins GUI Loaded Successfully - Combined Interface")
