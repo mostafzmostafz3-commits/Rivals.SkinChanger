@@ -3,6 +3,104 @@ local player = Players.LocalPlayer
 local viewModels = player:WaitForChild("PlayerScripts"):WaitForChild("Assets"):WaitForChild("ViewModels")
 local CoreGui = game:GetService("CoreGui")
 
+-- ========== نظام حفظ الإعدادات ==========
+local Settings = {
+    -- تخزين الإعدادات في ملف مؤقت على جهازك
+    saveData = {
+        lastWeapon = nil,
+        lastSkin = nil,
+        weaponSkinPairs = {}  -- لكل سلاح آخر شكله
+    }
+}
+
+-- تحميل الإعدادات المحفوظة
+local function loadSettings()
+    local success, data = pcall(function()
+        return readfile("Rivals_SkinChanger.json")
+    end)
+    if success and data then
+        local decoded = game:GetService("HttpService"):JSONDecode(data)
+        for k, v in pairs(decoded) do
+            Settings.saveData[k] = v
+        end
+        print("✅ Settings loaded!")
+    else
+        print("📁 No previous settings found.")
+    end
+end
+
+-- حفظ الإعدادات
+local function saveSettings()
+    local success, err = pcall(function()
+        local encoded = game:GetService("HttpService"):JSONEncode(Settings.saveData)
+        writefile("Rivals_SkinChanger.json", encoded)
+    end)
+    if success then
+        print("💾 Settings saved!")
+    else
+        warn("⚠️ Failed to save settings: " .. tostring(err))
+    end
+end
+
+-- حفظ آخر سلاح وشكل تم اختياره
+local function saveLastSelection(weaponName, skinName)
+    if weaponName then
+        Settings.saveData.lastWeapon = weaponName
+    end
+    if skinName then
+        Settings.saveData.lastSkin = skinName
+    end
+    saveSettings()
+end
+
+-- حفظ الشكل الخاص بسلاح معين
+local function saveWeaponSkin(weaponName, skinName)
+    if weaponName and skinName then
+        Settings.saveData.weaponSkinPairs[weaponName] = skinName
+        saveSettings()
+    end
+end
+
+-- تطبيق الإعدادات المحفوظة تلقائياً
+local function applySavedSettings()
+    task.wait(2) -- ننتظر شوية عشان الواجهة تتشحن
+    
+    for weaponName, skinName in pairs(Settings.saveData.weaponSkinPairs) do
+        -- البحث عن السلاح المحفوظ
+        local weaponsFolder = viewModels:FindFirstChild("Weapons")
+        if weaponsFolder then
+            local savedWeapon = weaponsFolder:FindFirstChild(weaponName)
+            if savedWeapon then
+                -- البحث عن الشكل المحفوظ
+                local skinFound = false
+                local skinFoldersList = {"Bundles","Skin Case","Skin Case 2","Unobtainable","Other","Glorious","Season","Fastive SkinCase"}
+                for _, folderName in ipairs(skinFoldersList) do
+                    local folder = viewModels:FindFirstChild(folderName)
+                    if folder then
+                        local savedSkin = folder:FindFirstChild(skinName)
+                        if savedSkin then
+                            -- تطبيق الشكل على السلاح
+                            for _, child in pairs(savedWeapon:GetChildren()) do
+                                child:Destroy()
+                            end
+                            for _, child in pairs(savedSkin:GetChildren()) do
+                                child:Clone().Parent = savedWeapon
+                            end
+                            skinFound = true
+                            print("🔄 Auto-applied: " .. skinName .. " → " .. weaponName)
+                            break
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+-- تحميل الإعدادات أولاً
+loadSettings()
+-- ========== نهاية نظام الحفظ ==========
+
 -- Remove old GUI
 if CoreGui:FindFirstChild("UltimateWeaponGUI") then
     CoreGui.UltimateWeaponGUI:Destroy()
@@ -49,6 +147,7 @@ closeBtn.TextScaled = true
 closeBtn.Font = Enum.Font.GothamBold
 Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 8)
 closeBtn.MouseButton1Click:Connect(function()
+    saveSettings()  -- حفظ قبل الإغلاق
     ScreenGui:Destroy()
 end)
 
@@ -113,6 +212,9 @@ if weaponsFolder then
                 selectedWeapon = weapon
                 selectedWeaponLabel.Text = "✅ Selected: " .. weapon.Name
                 selectedWeaponLabel.TextColor3 = Color3.fromRGB(100, 255, 150)
+                
+                -- حفظ آخر سلاح تم اختياره
+                saveLastSelection(weapon.Name, nil)
                 
                 for _, b in pairs(weaponButtons) do
                     b.BackgroundColor3 = Color3.fromRGB(55, 55, 80)
@@ -216,6 +318,9 @@ local function addSkinCard(skinName, sourceFolder)
             child:Clone().Parent = selectedWeapon
         end
         
+        -- حفظ الشكل للسلاح الحالي
+        saveWeaponSkin(selectedWeapon.Name, skinName)
+        
         local originalColor = applyBtn.BackgroundColor3
         applyBtn.BackgroundColor3 = Color3.fromRGB(100, 200, 100)
         selectedWeaponLabel.Text = "✓ Applied '" .. skinName .. "' to " .. selectedWeapon.Name
@@ -262,7 +367,7 @@ local footer = Instance.new("TextLabel", MainFrame)
 footer.Size = UDim2.new(1, -20, 0, 18)
 footer.Position = UDim2.new(0, 10, 1, -20)
 footer.BackgroundTransparency = 1
-footer.Text = "Created by Wagep1234 | Weapon Skin System"
+footer.Text = "Created by Wagep1234 | Weapon Skin System | 💾 Auto-Save Enabled"
 footer.TextColor3 = Color3.fromRGB(150, 150, 150)
 footer.TextScaled = true
 footer.Font = Enum.Font.Gotham
@@ -276,4 +381,7 @@ player.CharacterAdded:Connect(function(character)
     end
 end)
 
-print("✓ Ultimate Weapon Skins GUI Loaded Successfully - Combined Interface")
+-- تطبيق الإعدادات المحفوظة تلقائياً
+applySavedSettings()
+
+print("✓ Ultimate Weapon Skins GUI Loaded Successfully - With Auto-Save Feature")
